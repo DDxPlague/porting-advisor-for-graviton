@@ -105,4 +105,5 @@ jobs:
         
     - name: Build container
       run: |
-        podman build -f Dockerfile
+        podman build -f Dockerfile --tag tyler-testing-image:latest public.ecr.aws/r6g3j2g7/tyler-testing-image:latest
+        podman push public.ecr.aws/r6g3j2g7/tyler-testing-image:latest
