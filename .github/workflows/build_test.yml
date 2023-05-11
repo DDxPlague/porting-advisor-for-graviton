@@ -95,10 +95,6 @@ jobs:
         java-version: '11'
         distribution: 'adopt'
     
-    - name: Set up podman
-      run: |
-       sudo apt install podman
-    
     - name: Run build and tests
       run: |
         ./test.sh
