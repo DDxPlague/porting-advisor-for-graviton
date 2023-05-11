@@ -97,7 +97,7 @@ jobs:
     
     - name: Set up podman
       run: |
-       apt install podman
+       sudo apt install podman
     
     - name: Run build and tests
       run: |
