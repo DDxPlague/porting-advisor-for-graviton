@@ -102,8 +102,25 @@ jobs:
     - name: Code coverage
       run: |
         ./.venv/bin/python -m coverage report
-        
-    - name: Build container
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+          role-to-assume: arn:aws:iam::455141176485:role/Github_ECR_Upload
+          aws-region: us-west-2
+
+    - name: Login to Amazon ECR
+      id: ecr-login
+      uses: aws-actions/amazon-ecr-login@v1
+
+    - name: Build, tag, and push image to Amazon ECR
+      env:
+        ECR_REGISTRY: ${{ steps.ecr-login.outputs.registry }}
+        ECR_REPOSITORY: tyler-github-actions-testing
+        IMAGE_TAG: ${{ github.sha }}
       run: |
-        podman build -f Dockerfile --tag tyler-testing-image:latest public.ecr.aws/r6g3j2g7/tyler-testing-image:latest
-        podman push public.ecr.aws/r6g3j2g7/tyler-testing-image:latest
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+
+
+
