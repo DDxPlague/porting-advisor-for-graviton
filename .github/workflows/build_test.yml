@@ -1,5 +1,9 @@
 name: Build Test
 
+permissions:
+  id-token: write
+  contents: read
+  
 on:
   push:
     branches: 
@@ -75,3 +79,52 @@ jobs:
     - name: Code coverage
       run: |
         .\.venv\Scripts\coverage report
+
+  build-container:
+    runs-on: "ubuntu-latest"
+    strategy:
+      fail-fast: false
+
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v3
+      with:
+        python-version: "3.10"
+    
+    - name: Set up JDK 11
+      uses: actions/setup-java@v3
+      with:
+        java-version: '11'
+        distribution: 'adopt'
+    
+    - name: Run build and tests
+      run: |
+        ./test.sh
+    
+    - name: Code coverage
+      run: |
+        ./.venv/bin/python -m coverage report
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+          role-to-assume: arn:aws:iam::455141176485:role/Github_ECR_Upload
+          aws-region: us-west-2
+
+    - name: Login to Amazon ECR
+      id: ecr-login
+      uses: aws-actions/amazon-ecr-login@v1
+
+    - name: Build, tag, and push image to Amazon ECR
+      env:
+        ECR_REGISTRY: ${{ steps.ecr-login.outputs.registry }}
+        ECR_REPOSITORY: tyler-github-actions-testing
+        IMAGE_TAG: ${{ github.sha }}
+      run: |
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+
+
+
